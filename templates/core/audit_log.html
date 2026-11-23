@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block content %}<h1>Audit Log</h1>
+<form method="get" class="search-bar"><input name="q" value="{{ q }}" placeholder="Action or record type"><input name="user" value="{{ who }}" placeholder="Username"><button class="primary">Filter</button><a class="button" href="{% url 'audit_log' %}">Clear</a></form>
+<table><tr><th>When</th><th>User</th><th>Action</th><th>Record</th></tr>{% for a in page_obj.object_list %}<tr><td>{{ a.created_at|date:"M d, Y H:i" }}</td><td>{{ a.user|default:"—" }}</td><td>{{ a.action }}</td><td>{{ a.object_type }} {{ a.object_id }}</td></tr>{% empty %}<tr><td colspan="4">No entries.</td></tr>{% endfor %}</table>
+{% include "core/_pager.html" %}{% endblock %}

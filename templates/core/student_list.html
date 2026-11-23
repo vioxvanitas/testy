@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Student Records</h1>
-<p><a class="button primary" href="{% url 'student_create' %}">+ Register student</a></p>
+{% if can_manage %}<p><a class="button primary" href="{% url 'student_create' %}">+ Register student</a></p>{% endif %}
 <form method="get" class="filter-form">
   <input name="q" value="{{ search }}" placeholder="Search student ID, name, or email">
   <select name="term"><option value="">Choose semester</option>{% for term in terms %}<option value="{{ term.pk }}" {% if selected_term.pk == term.pk %}selected{% endif %}>{{ term }}</option>{% endfor %}</select>

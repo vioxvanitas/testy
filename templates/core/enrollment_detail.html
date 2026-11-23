@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% block content %}
+<p><a href="{% url 'enrollment_list' %}">← Enrollments</a></p>
+<h1>{{ enrollment.student.last_name }}, {{ enrollment.student.first_name }} <span class="status {{ enrollment.status|lower }}">{{ enrollment.get_status_display }}</span></h1>
+<p class="muted">{{ enrollment.student.student_id }} · {{ enrollment.student.program.code }} · {{ enrollment.term }} · {{ enrollment.get_enrollment_type_display }}{% if enrollment.approved_by %} · approved by {{ enrollment.approved_by }}{% endif %}</p>
+{% if subject_added == 'late' %}<div class="message success">Subject added. Assessment and balance recalculated; existing payments and discounts were preserved.</div>
+{% elif subject_added == 'regular' %}<div class="message success">Subject added to this enrollment.</div>
+{% elif subject_add_failed %}<div class="message error">Subject was not added. Review the validation message above.</div>{% endif %}
+
+{% if can_manage and transitions %}<section class="panel"><h2>Registrar actions</h2><form method="post" action="{% url 'enrollment_action' enrollment.pk %}" class="actions">{% csrf_token %}
+{% if 'APPROVED' in transitions %}<button class="primary" name="action" value="approve">Approve &amp; generate assessment</button>{% endif %}
+{% if 'ENROLLED' in transitions %}<button class="primary" name="action" value="enroll">Mark as Enrolled</button>{% endif %}
+{% if 'REJECTED' in transitions %}<button class="danger" name="action" value="reject" onclick="return confirm('Reject this application?')">Reject</button>{% endif %}
+{% if 'PENDING' in transitions %}<button name="action" value="reopen">Reopen as Pending</button>{% endif %}
+{% if enrollment.status == 'PENDING' or enrollment.status == 'APPROVED' %}<button name="action" value="assess">Regenerate assessment</button>{% endif %}</form>
+{% if required != None %}<p class="muted">Required payment before enrollment: <strong>₱{{ required|floatformat:2 }}</strong> · paid so far ₱{{ paid|floatformat:2 }}.</p>{% endif %}
+{% if discounts %}<form method="post" action="{% url 'enrollment_action' enrollment.pk %}" class="actions">{% csrf_token %}<input type="hidden" name="action" value="discount"><select name="fee">{% for f in discounts %}<option value="{{ f.pk }}">{{ f.name }} (−₱{{ f.amount|floatformat:2 }})</option>{% endfor %}</select><button>Apply discount</button></form>{% endif %}</section>{% endif %}
+
+<h2>Enrolled subjects <small class="muted">({{ units }} units)</small></h2>
+<table><tr><th>Code</th><th>Subject</th><th>Section</th><th>Instructor</th><th>Schedule</th><th>Units</th><th></th></tr>
+{% for l in lines %}{% with o=l.offering %}<tr><td>{{ o.curriculum_subject.subject.code }}</td><td>{{ o.curriculum_subject.subject.title }}</td><td>{{ o.section }}</td><td>{{ o.instructor }}</td><td>{% for s in o.schedules.all %}{{ s.get_day_display|slice:":3" }} {{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }} ({{ s.room }})<br>{% empty %}—{% endfor %}</td><td>{{ o.curriculum_subject.subject.units }}</td>
+<td>{% if can_edit %}<form method="post" action="{% url 'enrollment_drop_subject' enrollment.pk l.pk %}" class="inline">{% csrf_token %}<button class="link-button">Drop</button></form>{% endif %}</td></tr>{% endwith %}{% empty %}<tr><td colspan="7">No subjects yet.</td></tr>{% endfor %}</table>
+
+{% if can_add %}<h2>{% if enrollment.status == 'ENROLLED' %}Late add a class{% else %}Available classes for {{ enrollment.term }}{% endif %}</h2>
+{% if enrollment.status == 'ENROLLED' %}<p class="muted">Adding a class recalculates the assessment and balance. Existing payments and discounts are preserved; the student's status remains Enrolled.</p>{% endif %}
+<p class="muted">Showing {% if show_all %}all programs{% else %}{{ enrollment.student.program.code }} sections{% endif %}. <a href="?{% if show_all %}{% else %}all=1{% endif %}">{% if show_all %}Show only my program{% else %}Show all programs{% endif %}</a>. Prerequisites, seat capacity and schedule clashes are checked when you add a class.</p>
+<table><tr><th>Subject</th><th>Section</th><th>Schedule</th><th>Seats</th><th></th></tr>
+{% for o in offerings %}<tr><td>{{ o.curriculum_subject.subject }}</td><td>{{ o.section }}</td><td>{% for s in o.schedules.all %}{{ s.get_day_display|slice:":3" }} {{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }}<br>{% empty %}—{% endfor %}</td><td>{{ o.taken }}/{{ o.capacity }}</td>
+<td><form method="post" action="{% url 'enrollment_add_subject' enrollment.pk %}" class="inline">{% csrf_token %}<input type="hidden" name="offering" value="{{ o.pk }}"><button class="primary" {% if o.taken >= o.capacity %}disabled{% endif %}>Add</button></form></td></tr>{% empty %}<tr><td colspan="5">No classes available.</td></tr>{% endfor %}</table>{% endif %}
+{% if enrollment.status == 'ENROLLED' and not can_manage %}<p class="muted">To add a subject after enrollment, contact the Registrar. Only Registrar or Administrator accounts can late-add classes.</p>{% endif %}
+
+<h2>Assessment</h2>
+<table><tr><th>Description</th><th>Amount</th></tr>{% for i in items %}<tr><td>{{ i.description }}</td><td>₱{{ i.amount|floatformat:2 }}</td></tr>{% empty %}<tr><td colspan="2">Assessment is generated when the application is approved.</td></tr>{% endfor %}
+<tr><th>Total assessed</th><th>₱{{ assessed|floatformat:2 }}</th></tr><tr><td>Paid</td><td>₱{{ paid|floatformat:2 }}</td></tr><tr><th>Balance</th><th>₱{{ balance|floatformat:2 }}</th></tr></table>
+<p><a class="button" href="{% url 'billing_detail' enrollment.pk %}">Payments &amp; receipts</a> {% if can_pay %}<a class="button primary" href="{% url 'record_payment' %}?enrollment={{ enrollment.pk }}">Record payment</a>{% endif %}</p>
+{% endblock %}

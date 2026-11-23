@@ -1,1 +1,39 @@
-{% extends "base.html" %}{% block content %}<h1>Enrollment Applications</h1><p><a class="button primary" href="{% url 'enrollment_create' %}">+ New application</a> {% if can_manage %}<a class="button" href="{% url 'managed_list' 'enrollment-records' %}">Manage enrollment statuses</a>{% endif %}</p><p class="muted">Set a student's official status to Enrolled in Academic Setup → Enrollment Records / Status after registrar approval.</p><table><tr><th>Student</th><th>Term</th><th>Type</th><th>Status</th><th>Date</th><th>Action</th></tr>{% for e in enrollments %}<tr><td>{{e.student}}</td><td>{{e.term}}</td><td>{{e.get_enrollment_type_display}}</td><td>{% if e.status == 'ENROLLED' %}<span class="status enrolled">Enrolled</span>{% else %}{{e.get_status_display}}{% endif %}</td><td>{{e.submitted_at|date:"M d, Y"}}</td><td>{% if can_manage %}<a href="{% url 'managed_edit' 'enrollment-records' e.pk %}">Update</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="6">No applications.</td></tr>{% endfor %}</table>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<h1>Enrollment Applications</h1>
+<p>
+  <a class="button primary" href="{% url 'enrollment_create' %}">+ New application</a>
+  {% if can_manage %}<a class="button" href="{% url 'managed_list' 'enrollment-records' %}">Enrollment records</a>{% endif %}
+</p>
+{% if can_manage %}
+<p class="muted">To update a student's status, open the record and use the registrar actions. Approval requires at least one subject; marking a student Enrolled requires the minimum payment.</p>
+{% endif %}
+<form method="get" class="filter-form">
+  <select name="status">
+    <option value="">All statuses</option>
+    {% for value, label in statuses %}
+    <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="primary" type="submit">Filter</button>
+  <a class="button" href="{% url 'enrollment_list' %}">Clear</a>
+</form>
+<table>
+  <tr><th>Student</th><th>Term</th><th>Type</th><th>Status</th><th>Date</th><th>Action</th></tr>
+  {% for e in page_obj.object_list %}
+  <tr>
+    <td>{{ e.student }}</td>
+    <td>{{ e.term }}</td>
+    <td>{{ e.get_enrollment_type_display }}</td>
+    <td><span class="status {{ e.status|lower }}">{{ e.get_status_display }}</span></td>
+    <td>{{ e.submitted_at|date:"M d, Y" }}</td>
+    <td>
+      <a href="{% url 'enrollment_detail' e.pk %}">{% if can_manage %}Review / update status{% else %}View details{% endif %}</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6">No applications.</td></tr>
+  {% endfor %}
+</table>
+{% include "core/_pager.html" %}
+{% endblock %}

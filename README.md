@@ -52,3 +52,13 @@ Assign users to the appropriate group. Create Instructor records linked to instr
 8. Fees
 9. Student records and enrollment applications
 
+## Generate fake data
+Install the optional Faker dependency and populate linked sample records without deleting existing data:
+
+```powershell
+python -m pip install -r requirements-demo.txt
+python manage.py generate_fake_data --students 12 --seed 2026
+```
+
+The command creates academic records, students and accounts with unusable passwords, schedules, enrollments, assessments, payments, grades and audit logs. Run migrations first. Choose a different `--seed` to vary the generated values; each run adds more student records.
+

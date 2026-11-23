@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<section class="panel narrow">
+  <h1>Too many failed attempts</h1>
+  <p>
+    This account is temporarily locked after repeated failed sign-ins. Please
+    wait a few minutes and try again, or ask the Registrar to help you.
+  </p>
+  <a class="button" href="{% url 'login' %}">Back to login</a>
+</section>
+{% endblock %}

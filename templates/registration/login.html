@@ -1,1 +1,35 @@
-{% extends "base.html" %}{% block content %}<section class="panel narrow"><h1>Student &amp; Staff Login</h1><p class="muted">Students: enter your Student ID as your username. For a newly created student account, the initial password is your last name (case-sensitive).</p><form method="post">{% csrf_token %}<p><label for="id_username">Student ID / Username</label>{{ form.username }}</p><p><label for="id_password">Password</label>{{ form.password }}</p>{% if form.errors %}<p class="errorlist">Your username or password is incorrect. Please try again.</p>{% endif %}<input type="hidden" name="next" value="{{ next }}"><button class="primary">Login</button></form><p class="muted">After signing in, students can change their password using the Change Password link.</p></section>{% endblock %}
+{% extends "base.html" %} {% block content %}
+<section class="panel narrow">
+  <h1>Student &amp; Staff Login</h1>
+
+  <p class="muted">
+    Students: enter your Student ID as your username. A newly created account
+    comes with a temporary password from the Registrar; you will be asked to
+    change it after signing in.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <p>
+      <label for="id_username">Student ID / Username</label>
+      {{ form.username }}
+    </p>
+
+    <p>
+      <label for="id_password">Password</label>
+      {{ form.password }}
+    </p>
+
+    {% if form.errors %}
+    <p class="errorlist">
+      Your username or password is incorrect. Please try again.
+    </p>
+    {% endif %}
+
+    <input type="hidden" name="next" value="{{ next }}" />
+
+    <button class="primary" type="submit">Login</button>
+  </form>
+</section>
+{% endblock %}

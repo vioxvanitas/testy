@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block content %}<section class="panel narrow receipt"><h1>Official Receipt</h1>
+{% if payment.is_void %}<p class="message">This receipt has been VOIDED{% if payment.void_reason %}: {{ payment.void_reason }}{% endif %}.</p>{% endif %}
+<div class="detail-grid"><div><small>Receipt no.</small><strong>{{ payment.receipt_no }}</strong></div><div><small>Date</small><strong>{{ payment.paid_at|date:"M d, Y H:i" }}</strong></div>
+<div><small>Student</small><strong>{{ payment.enrollment.student }}</strong></div><div><small>Term</small><strong>{{ payment.enrollment.term }}</strong></div>
+<div><small>Method</small><strong>{{ payment.get_method_display }}</strong></div><div><small>Reference</small><strong>{{ payment.reference_no|default:"—" }}</strong></div>
+<div><small>Amount paid</small><strong>₱{{ payment.amount|floatformat:2 }}</strong></div><div><small>Balance after payment (current)</small><strong>₱{{ balance|floatformat:2 }}</strong></div>
+<div><small>Received by</small><strong>{{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}</strong></div></div>
+<p class="no-print"><button class="primary" onclick="window.print()">Print</button> <a class="button" href="{% url 'billing_detail' payment.enrollment_id %}">Back</a></p></section>{% endblock %}

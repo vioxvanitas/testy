@@ -5,6 +5,24 @@
 {% if can_manage %}<p><a class="button primary" href="{% url 'student_edit' student.pk %}">Edit student</a></p>{% endif %}
 <section class="panel"><h2>Student Portal Account</h2>{% if student.user %}<p><strong>Account username:</strong> {{ student.user.username }}</p><p class="muted">The student can sign in and change their password from the Change Password page.</p>{% else %}<p>No portal account is linked to this student yet.</p>{% if can_manage %}<form method="post" action="{% url 'student_create_portal_account' student.pk %}">{% csrf_token %}<button class="primary" type="submit">Create Student Login Account</button></form><p class="muted">Username will be the Student ID. Initial password will be the student's last name (case-sensitive). Tell the student to change it after signing in.</p>{% endif %}{% endif %}</section>
 <section class="panel"><h2>Student Information</h2><div class="detail-grid"><div><small>College</small><strong>{{ student.program.department.name }}</strong></div><div><small>Program</small><strong>{{ student.program.code }} — {{ student.program.name }}</strong></div><div><small>Year Level</small><strong>{{ student.year_level }}</strong></div><div><small>Date of Birth</small><strong>{{ student.birth_date|default:"—" }}</strong></div><div><small>Gender</small><strong>{{ student.get_gender_display|default:"—" }}</strong></div><div><small>Email</small><strong>{{ student.email|default:"—" }}</strong></div><div><small>Phone</small><strong>{{ student.phone|default:"—" }}</strong></div><div><small>Address</small><strong>{{ student.address|default:"—" }}</strong></div></div></section>
-<h2>Enrollment History</h2><table><tr><th>Semester</th><th>Enrollment Type</th><th>Status</th><th>Assessment</th><th>Payments</th></tr>{% for e in enrollments %}<tr><td>{{ e.term }}</td><td>{{ e.get_enrollment_type_display }}</td><td>{{ e.get_status_display }}</td><td>₱{{ e.assessment_items.all|length }} item(s)</td><td>{% for payment in e.payments.all %}₱{{ payment.amount|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</td></tr>{% empty %}<tr><td colspan="5">No enrollment history yet.</td></tr>{% endfor %}</table>
+<h2>Enrollment History</h2>
+<table>
+  <tr><th>Semester</th><th>Enrollment Type</th><th>Status</th><th>Assessed</th><th>Paid</th><th>Balance</th><th>Details</th></tr>
+  {% for row in rows %}
+  {% with e=row.enrollment %}
+  <tr>
+    <td>{{ e.term }}</td>
+    <td>{{ e.get_enrollment_type_display }}</td>
+    <td><span class="status {{ e.status|lower }}">{{ e.get_status_display }}</span></td>
+    <td>₱{{ row.assessed|floatformat:2 }}</td>
+    <td>₱{{ row.paid|floatformat:2 }}</td>
+    <td>₱{{ row.balance|floatformat:2 }}</td>
+    <td><a href="{% url 'enrollment_detail' e.pk %}">View</a></td>
+  </tr>
+  {% endwith %}
+  {% empty %}
+  <tr><td colspan="7">No enrollment history yet.</td></tr>
+  {% endfor %}
+</table>
 {% if can_manage %}<form method="post" action="{% url 'student_delete' student.pk %}" onsubmit="return confirm('Delete this student record? Records linked to enrollment or payments cannot be deleted.');">{% csrf_token %}<button type="submit" class="danger">Delete student</button></form>{% endif %}
 {% endblock %}

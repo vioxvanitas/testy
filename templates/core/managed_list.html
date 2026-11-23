@@ -1,5 +1,45 @@
-{% extends "base.html" %}{% block content %}
-<p><a href="{% url 'academic_overview' %}">← Academic setup</a></p><h1>{{ title }}</h1>
-{% if can_manage %}<p><a class="button primary" href="{% url 'managed_create' slug %}">+ Add {{ title|lower }}</a></p>{% endif %}
-<table><tr><th>Record</th><th>Details</th><th>Actions</th></tr>{% for obj in objects %}<tr><td>{{ obj }}</td><td>{% if obj.code %}Code: {{ obj.code }}{% endif %}{% if obj.name %}{{ obj.name }}{% endif %}{% if obj.program %}{{ obj.program }}{% endif %}{% if obj.term %} · {{ obj.term }}{% endif %}{% if obj.status %} · {{ obj.get_status_display }}{% endif %}</td><td>{% if can_manage %}<a href="{% url 'managed_edit' slug obj.pk %}">Edit</a> <form method="post" action="{% url 'managed_delete' slug obj.pk %}" class="inline" onsubmit="return confirm('Delete this record?');">{% csrf_token %}<button class="link-button" type="submit">Delete</button></form>{% else %}View only{% endif %}</td></tr>{% empty %}<tr><td colspan="3">No records yet.</td></tr>{% endfor %}</table>
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{% url 'academic_overview' %}">← Academic setup</a></p>
+<h1>{{ title }}</h1>
+{% if slug == 'enrollment-records' %}
+<p class="muted">To change an enrollment status, choose “Review / change status” and use the registrar actions. Approval requires at least one subject; marking a student Enrolled requires the minimum payment.</p>
+{% endif %}
+{% if can_manage %}
+<p><a class="button primary" href="{% url 'managed_create' slug %}">+ Add {{ title|lower }}</a></p>
+{% endif %}
+<table>
+  <thead>
+    <tr>
+      {% for header in headers %}<th>{{ header }}</th>{% endfor %}
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for value in row.cells %}<td>{{ value }}</td>{% endfor %}
+      <td>
+        {% if can_manage %}
+        {% if slug == 'enrollment-records' %}
+        <a href="{% url 'enrollment_detail' row.obj.pk %}">Review / change status</a>
+        <a href="{% url 'managed_edit' slug row.obj.pk %}">Edit record</a>
+        {% else %}
+        <a href="{% url 'managed_edit' slug row.obj.pk %}">Edit</a>
+        {% endif %}
+        <form method="post" action="{% url 'managed_delete' slug row.obj.pk %}" class="inline" onsubmit="return confirm('Delete this record?');">
+          {% csrf_token %}
+          <button class="link-button" type="submit">Delete</button>
+        </form>
+        {% else %}
+        View only
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="{{ headers|length|add:1 }}">No records yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% include "core/_pager.html" %}
 {% endblock %}

@@ -1,1 +1,78 @@
-{% extends "base.html" %}{% block content %}<h1>Dashboard</h1><p>Welcome, {{request.user.get_full_name|default:request.user.username}}.</p><div class="cards"><div class="card"><small>Students</small><strong>{{students}}</strong></div><div class="card"><small>Applications</small><strong>{{enrollments}}</strong></div><div class="card"><small>Pending review</small><strong>{{pending}}</strong></div><div class="card"><small>Payments recorded</small><strong>₱{{collections|floatformat:2}}</strong></div></div><section class="panel"><h2>Quick actions</h2><p><a href="/students/new/">Register student</a> · <a href="/enrollments/new/">Create enrollment</a> · <a href="/billing/payment/">Record payment</a> · <a href="/academics/">Manage academic records</a></p><p class="muted">Use Academic Setup to manage colleges, programs, terms, subjects, curriculum, instructors, rooms, sections, offerings, schedules, fees, and enrollment statuses. Django Admin remains available for advanced administration and user/group setup.</p></section>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+{% if is_student_user %}
+<h1>Student Dashboard</h1>
+<p>Welcome, {{ request.user.get_full_name|default:request.user.username }}.</p>
+{% if student %}
+<div class="cards">
+  <div class="card"><small>Student ID</small><strong>{{ student.student_id }}</strong></div>
+  <div class="card"><small>Program</small><strong>{{ student.program.code }}</strong></div>
+  <div class="card"><small>Year Level</small><strong>{{ student.year_level }}</strong></div>
+</div>
+<section class="panel">
+  <h2>Your Student Record</h2>
+  <div class="detail-grid">
+    <div><small>Name</small><strong>{{ student.last_name }}, {{ student.first_name }} {{ student.middle_name }}</strong></div>
+    <div><small>Program</small><strong>{{ student.program.code }} — {{ student.program.name }}</strong></div>
+    <div><small>Year Level</small><strong>{{ student.year_level }}</strong></div>
+    <div><small>Email</small><strong>{{ student.email|default:"—" }}</strong></div>
+    <div><small>Phone</small><strong>{{ student.phone|default:"—" }}</strong></div>
+  </div>
+  <p><a href="{% url 'student_detail' student.pk %}">View full record and enrollment history</a></p>
+</section>
+<section class="panel">
+  <h2>Current Enrollment</h2>
+  {% if term %}
+  <p>Active term: <strong>{{ term }}</strong></p>
+  {% if enrollment %}
+  <p>Status: <strong>{{ enrollment.get_status_display }}</strong></p>
+  <p>Balance: <strong>₱{{ balance|floatformat:2 }}</strong></p>
+  {% else %}
+  <p>You do not have an enrollment application for this term.</p>
+  {% endif %}
+  {% else %}
+  <p>No school term is currently open.</p>
+  {% endif %}
+</section>
+<p class="actions">
+  <a class="button" href="{% url 'enrollment_list' %}">My Enrollments</a>
+  <a class="button" href="{% url 'billing_list' %}">My Billing</a>
+  <a class="button" href="{% url 'schedule_list' %}">My Schedule</a>
+  <a class="button" href="{% url 'grade_list' %}">My Grades</a>
+</p>
+{% else %}
+<p class="message">No student record is linked to your account. Please contact the Registrar.</p>
+{% endif %}
+{% else %}
+<h1>Dashboard</h1>
+<p>Welcome, {{ request.user.get_full_name|default:request.user.username }}.</p>
+<div class="cards">
+  {% for label, value in cards %}
+  <div class="card"><small>{{ label }}</small><strong>{{ value }}</strong></div>
+  {% empty %}
+  <p class="muted">No dashboard metrics are available for this account.</p>
+  {% endfor %}
+</div>
+{% if user_can_manage or user_can_pay or 'schedules' in modules or 'grades' in modules %}
+<section class="panel">
+  <h2>Quick Actions</h2>
+  <p>
+    {% if user_can_manage %}
+    <a href="{% url 'student_create' %}">Register student</a> ·
+    <a href="{% url 'enrollment_create' %}">Create enrollment</a> ·
+    <a href="{% url 'academic_overview' %}">Manage academic records</a>
+    {% endif %}
+    {% if user_can_pay %}
+    · <a href="{% url 'record_payment' %}">Record payment</a>
+    {% endif %}
+    {% if 'schedules' in modules %}
+    · <a href="{% url 'schedule_list' %}">Schedules</a>
+    {% endif %}
+    {% if 'grades' in modules %}
+    · <a href="{% url 'grade_list' %}">Grades</a>
+    {% endif %}
+  </p>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}
